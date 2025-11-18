@@ -9,12 +9,12 @@ create table pms_projects (
   , project_code                varchar2(50 char) not null
   , project_name                varchar2(100 char) not null
   , project_description         varchar2(500 char)
-  , project_type                varchar2(50 char)
-  , project_status              varchar2(20 char)
+  --, project_type                varchar2(50 char)
+  --, project_status              varchar2(20 char)
   , start_date                  date
   , end_date                    date
   , budget                      number
-  , currency                    varchar2(3 char)
+  , currency_id                 number
   , project_manager_id          number
   , project_lead_id             number
   , project_url                 varchar2(500 char)
@@ -44,8 +44,8 @@ begin
   execute immediate 'comment on column pms_projects.project_code is ''Unique code for the project, e.g., PROJ-001.''';
   execute immediate 'comment on column pms_projects.project_name is ''Name of the project.''';
   execute immediate 'comment on column pms_projects.project_description is ''Description of the project.''';
-  execute immediate 'comment on column pms_projects.project_type is ''Type of project, e.g., DEVELOPMENT, MAINTENANCE, RESEARCH.''';
-  execute immediate 'comment on column pms_projects.project_status is ''Status of the project, e.g., ACTIVE, ON_HOLD, COMPLETED.''';
+  --execute immediate 'comment on column pms_projects.project_type is ''Type of project, e.g., DEVELOPMENT, MAINTENANCE, RESEARCH.''';
+  --execute immediate 'comment on column pms_projects.project_status is ''Status of the project, e.g., ACTIVE, ON_HOLD, COMPLETED.''';
   execute immediate 'comment on column pms_projects.start_date is ''Start date of the project.''';
   execute immediate 'comment on column pms_projects.end_date is ''End date of the project.''';
   execute immediate 'comment on column pms_projects.budget is ''Budget allocated for the project.''';

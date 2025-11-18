@@ -33,7 +33,8 @@ create table core_users (
   , constraint chk_core_users_active_yn check (active_yn in ('Y', 'N'))
 );
 
-
+-- Constraint to enforce uppercase username
+alter table core_users add constraint chk_core_users_username_uppercase check (upper(username) = username);
 
 -- column comments
 begin

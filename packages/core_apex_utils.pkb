@@ -15,8 +15,9 @@ create or replace package body core_apex_utils as
  *
  * @author Angel Flores (Contractor)
  * @created  Tuesday, 26/August/2025
- * @param l_param
- * @return x_matx_error_ind with
+ * @param p_username
+ * @param p_password
+ * @return boolean
  */
 function custom_authentication(
     p_username                  in varchar2
@@ -33,7 +34,31 @@ begin
 
   logger.log('START', l_scope, null, l_params);
 
-  return true;
+  begin
+    insert
+      into core_users (
+           username
+         , display_username
+         , system_email
+         , last_login
+      )
+    values (
+           upper(p_username)
+         , p_username -- display_username
+         , p_username -- system_email
+         , current_timestamp
+      );
+
+      return true;
+
+  exception
+    when dup_val_on_index then
+      logger.log('Username already exists', l_scope, null, l_params);
+      return true;
+  end;
+
+
+
 
 /*   select count(*)
     into l_count
