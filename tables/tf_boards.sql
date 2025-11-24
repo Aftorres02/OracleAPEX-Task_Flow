@@ -52,6 +52,7 @@ create table tf_boards (
 
 
 alter table tf_boards add constraint fk_boards_sprint foreign key (sprint_id) references pms_sprints(sprint_id);
+alter table tf_boards add constraint fk_boards_workflow_template foreign key (workflow_template_id) references tf_workflow_templates(workflow_template_id);
 
 
 -- column comments
