@@ -2,8 +2,8 @@ create or replace package tf_workflow_templates_api as
 
 
 procedure create_board_columns_from_template(
-    p_board_id                                  in tf_boards.board_id%type
-  , p_workflow_template_id                      in tf_workflow_templates.workflow_template_id%type
+    p_sprint_id                                     in pms_sprints.sprint_id%type
+  , p_workflow_template_id                          in tf_workflow_templates.workflow_template_id%type
 );
 
 

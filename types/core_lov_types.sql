@@ -19,7 +19,7 @@ end;
 create or replace type core_lov_row as object (
     display_value    varchar2(4000 char)
   , return_value     varchar2(4000 char)
-  , display_seq      number
+  , display_seq      varchar2(4000 char)
 );
 /
 
