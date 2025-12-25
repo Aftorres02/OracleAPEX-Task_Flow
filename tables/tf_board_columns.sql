@@ -9,7 +9,7 @@ create table tf_board_columns (
   , board_id                    number not null
   , column_name                 varchar2(100 char) not null
   , display_seq                 number default 0 not null
-  , class_color                 varchar2(100 char)
+  , hex_color                 varchar2(100 char)
   , class_icon                  varchar2(100 char)
   , description                 varchar2(500 char)
   , active_yn                   varchar2(1 char) default 'Y' not null
@@ -37,7 +37,7 @@ begin
   execute immediate 'comment on column tf_board_columns.board_id is ''References the board for this column.''';
   execute immediate 'comment on column tf_board_columns.column_name is ''Name of the column.''';
   execute immediate 'comment on column tf_board_columns.display_seq is ''Order of the column within the board.''';
-  execute immediate 'comment on column tf_board_columns.class_color is ''CSS class name that represents the color for this column.''';
+  execute immediate 'comment on column tf_board_columns.hex_color is ''CSS class name that represents the color for this column.''';
   execute immediate 'comment on column tf_board_columns.class_icon is ''CSS class name that represents the icon for this column.''';
   execute immediate 'comment on column tf_board_columns.description is ''Description of the column.''';
   execute immediate 'comment on column tf_board_columns.active_yn is ''Indicates if the column is active (Y) or not (N).''';

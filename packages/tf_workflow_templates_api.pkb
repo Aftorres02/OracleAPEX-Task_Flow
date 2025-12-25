@@ -82,7 +82,7 @@ begin
            board_id
          , column_name
          , display_seq
-         , class_color
+         , hex_color
          , class_icon
          , description
          , active_yn

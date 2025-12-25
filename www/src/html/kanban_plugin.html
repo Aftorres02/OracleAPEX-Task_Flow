@@ -1,0 +1,17 @@
+{if APEX$IS_LAZY_LOADING/}
+  <div></div>
+  {if COLUMN_NAME%assigned/}<div></div>{endif/}
+{else/}
+<div class="column-5a" data-column-id="#COLUMN_ID#">
+    <div class="column-header-5a">
+        <div class="column-title-5a">#COLUMN_NAME#</div>
+        {if ?TOTAL_TICKETS/}
+        <div class="ticket-count-5a">#TOTAL_TICKETS#</div>
+        {endif/}
+        <div class="ticket-creation-5a">+</div>
+    </div>
+    <div class="tickets-container-5a">
+        <!-- Los tickets se insertarán aquí dinámicamente -->
+    </div>
+</div>
+{endif/}

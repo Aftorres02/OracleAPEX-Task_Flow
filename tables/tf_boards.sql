@@ -46,6 +46,7 @@ create table tf_boards (
   , constraint uk_boards_code unique (board_code)
   , constraint chk_boards_default check (default_yn in ('Y', 'N'))
   , constraint chk_boards_active_yn check (active_yn in ('Y', 'N'))
+  , constraint tf_boards_ck_01 check (board_code = upper(trim(board_code)) and instr(board_code, ' ') = 0)
 );
 
 -- Performance indexes

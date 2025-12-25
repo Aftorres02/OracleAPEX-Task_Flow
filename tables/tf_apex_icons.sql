@@ -15,6 +15,7 @@ create table tf_apex_icons (
                                   not null
   , created_on                   timestamp with local time zone default localtimestamp not null
   , constraint pk_tf_apex_icons primary key (category_code, icon_name)
+  , constraint tf_apex_icons_ck_01 check (category_code = upper(trim(category_code)) and instr(category_code, ' ') = 0)
 );
 
 -- table comment

@@ -9,7 +9,7 @@ procedure add_ticket(
   , p_title                       in tf_tickets.title%type
   , p_description                 in tf_tickets.description%type default null
   , p_priority_id                 in tf_tickets.priority_id%type
-  , p_assignee_id                 in tf_tickets.assignee_id%type default null
+  , p_assigned_to_id              in tf_tickets.assigned_to_id%type default null
   , p_reporter_id                 in tf_tickets.reporter_id%type default null
   , p_estimated_hours             in tf_tickets.estimated_hours%type default null
   , p_actual_hours                in tf_tickets.actual_hours%type default null

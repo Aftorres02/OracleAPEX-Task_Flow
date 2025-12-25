@@ -25,6 +25,7 @@ create table core_lov_currencies (
   , last_updated_on             timestamp with local time zone
   , constraint uk_core_lov_currencies_code unique (currency_code)
   , constraint chk_core_lov_currencies_active_yn check (active_yn in ('Y', 'N'))
+  , constraint core_lov_currencies_ck_01 check (currency_code = upper(trim(currency_code)) and instr(currency_code, ' ') = 0)
 );
 
 -- column comments

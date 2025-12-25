@@ -25,6 +25,7 @@ create table tf_workflow_template_columns (
   , constraint fk_template_columns_template foreign key (workflow_template_id) references tf_workflow_templates(workflow_template_id)
   , constraint uk_template_columns_order unique (workflow_template_id, display_seq)
   , constraint chk_template_columns_active_yn check (active_yn in ('Y', 'N'))
+  , constraint tf_workflow_template_columns_ck_01 check (column_code = upper(trim(column_code)) and instr(column_code, ' ') = 0)
 );
 
 -- Performance indexes

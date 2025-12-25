@@ -12,7 +12,7 @@ create table tf_ticket_priorities (
   , priority_name               varchar2(100 char) not null
   , priority_code               varchar2(50 char) not null
   , description                 varchar2(500 char)
-  , class_color                 varchar2(100 char)
+  , hex_color                 varchar2(100 char)
   , class_icon                  varchar2(100 char)
   , display_seq                 number default 0 not null
   , default_yn                  varchar2(1 char) default 'N' not null
@@ -31,6 +31,7 @@ create table tf_ticket_priorities (
   , constraint uk_ticket_priorities_name unique (priority_name)
   , constraint chk_ticket_priorities_default check (default_yn in ('Y', 'N'))
   , constraint chk_ticket_priorities_active_yn check (active_yn in ('Y', 'N'))
+  , constraint tf_ticket_priorities_ck_01 check (priority_code = upper(trim(priority_code)) and instr(priority_code, ' ') = 0)
 );
 
 -- column comments
@@ -39,7 +40,7 @@ begin
   execute immediate 'comment on column tf_ticket_priorities.priority_name is ''Display name for the ticket priority.''';
   execute immediate 'comment on column tf_ticket_priorities.priority_code is ''Unique code for the ticket priority.''';
   execute immediate 'comment on column tf_ticket_priorities.description is ''Description of the ticket priority.''';
-  execute immediate 'comment on column tf_ticket_priorities.class_color is ''CSS class name that represents the color for this priority.''';
+  execute immediate 'comment on column tf_ticket_priorities.hex_color is ''CSS class name that represents the color for this priority.''';
   execute immediate 'comment on column tf_ticket_priorities.class_icon is ''CSS class name that represents the icon for this priority.''';
   execute immediate 'comment on column tf_ticket_priorities.display_seq is ''Determines the display order for priorities.''';
   execute immediate 'comment on column tf_ticket_priorities.default_yn is ''Indicates if this is the default priority.''';

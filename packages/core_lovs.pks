@@ -20,5 +20,13 @@ create or replace package core_lovs as
 
 
 
+function get_users(
+    include_inactive_yn in varchar2 default 'N'
+) return core_lov_table;
+
+
+
+
+
 end core_lovs;
 /

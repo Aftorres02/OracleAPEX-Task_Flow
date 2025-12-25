@@ -14,7 +14,8 @@ create table tf_ticket_types (
   , ticket_type_name            varchar2(100 char) not null
   , ticket_type_code            varchar2(50 char) not null
   , description                 varchar2(500 char)
-  , class_color                 varchar2(100 char)
+  , ticket_type_prefix          varchar2(5 char)
+  , hex_color                   varchar2(100 char)
   , class_icon                  varchar2(100 char)
   , display_seq                 number default 0 not null
   , default_yn                  varchar2(1 char) default 'N' not null
@@ -32,6 +33,7 @@ create table tf_ticket_types (
   , constraint uk_ticket_types_code unique (ticket_type_code)
   , constraint chk_ticket_types_default check (default_yn in ('Y', 'N'))
   , constraint chk_ticket_types_active_yn check (active_yn in ('Y', 'N'))
+  , constraint tf_ticket_types_ck_01 check (ticket_type_code = upper(trim(ticket_type_code)) and instr(ticket_type_code, ' ') = 0)
 );
 
 -- Performance indexes
@@ -41,6 +43,7 @@ begin
   execute immediate 'comment on column tf_ticket_types.ticket_type_id is ''Unique identifier for the ticket type (Primary Key).''';
   execute immediate 'comment on column tf_ticket_types.ticket_type_name is ''Display name for the ticket type.''';
   execute immediate 'comment on column tf_ticket_types.ticket_type_code is ''Unique code for the ticket type.''';
+  execute immediate 'comment on column tf_ticket_types.ticket_type_prefix is ''Short prefix/code (4-5 chars) used for ticket numbering.''';
   execute immediate 'comment on column tf_ticket_types.description is ''Description of the ticket type.''';
   execute immediate 'comment on column tf_ticket_types.default_yn is ''Indicates if this is the default ticket type.''';
   execute immediate 'comment on column tf_ticket_types.active_yn is ''Indicates if the ticket type is active (Y) or not (N).''';

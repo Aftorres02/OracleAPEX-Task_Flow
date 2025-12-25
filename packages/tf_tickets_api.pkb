@@ -22,7 +22,7 @@ create or replace package body tf_tickets_api as
  * @param p_title
  * @param p_description
  * @param p_priority
- * @param p_assignee_id
+ * @param p_assigned_to_id
  * @param p_reporter_id
  * @param p_estimated_hours
  * @param p_actual_hours
@@ -39,7 +39,7 @@ procedure add_ticket(
   , p_title                       in tf_tickets.title%type
   , p_description                 in tf_tickets.description%type default null
   , p_priority_id                 in tf_tickets.priority_id%type
-  , p_assignee_id                 in tf_tickets.assignee_id%type default null
+  , p_assigned_to_id              in tf_tickets.assigned_to_id%type default null
   , p_reporter_id                 in tf_tickets.reporter_id%type default null
   , p_estimated_hours             in tf_tickets.estimated_hours%type default null
   , p_actual_hours                in tf_tickets.actual_hours%type default null
@@ -62,7 +62,7 @@ begin
   logger.append_param(l_params, 'p_title: ', p_title);
   logger.append_param(l_params, 'p_description: ', p_description);
   logger.append_param(l_params, 'p_priority_id: ', p_priority_id);
-  logger.append_param(l_params, 'p_assignee_id: ', p_assignee_id);
+  logger.append_param(l_params, 'p_assigned_to_id: ', p_assigned_to_id);
   logger.append_param(l_params, 'p_reporter_id: ', p_reporter_id);
   logger.append_param(l_params, 'p_estimated_hours: ', p_estimated_hours);
   logger.append_param(l_params, 'p_actual_hours: ', p_actual_hours);
@@ -96,7 +96,7 @@ begin
     , title
     , description
     , priority_id
-    , assignee_id
+    , assigned_to_id
     , reporter_id
     , estimated_hours
     , actual_hours
@@ -114,7 +114,7 @@ begin
     , p_title
     , p_description
     , p_priority_id
-    , p_assignee_id
+    , p_assigned_to_id
     , p_reporter_id
     , p_estimated_hours
     , p_actual_hours
@@ -170,11 +170,14 @@ begin
     select t.ticket_id
          , t.ticket_number
          , t.title
-         , t.priority_id
-         , null as assigned_to
-         , to_char(t.created_on, 'DD/MM/YYYY HH24:MI') as created_date
+         , tp.priority_code as priority
+         , tt.ticket_type_code as ticket_type
+         , assignee.display_username as assigned_to
+         , to_char(t.created_on AT TIME ZONE APEX_UTIL.GET_SESSION_TIME_ZONE, 'DD/MON/YYYY HH24:MI') as created_date
       from tf_tickets t
-      --left join core_users assignee on t.assignee_id = assignee.user_id
+      join tf_ticket_priorities tp on tp.ticket_priority_id = t.priority_id
+      join tf_ticket_types tt on tt.ticket_type_id = t.ticket_type_id
+      left join core_users assignee on t.assigned_to_id = assignee.user_id
      where t.board_column_id = l_board_column_id
        and t.active_yn = 'Y'
        --and t.tenant_id = sys_context('APEX$SESSION','APP_TENANT_ID')
