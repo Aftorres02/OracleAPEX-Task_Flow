@@ -535,6 +535,7 @@ namespace.kanbanView = (function(namespace, $, undefined) {
 
 
 
+
   /* ================================================================ */
   /**
    * Load data for all columns

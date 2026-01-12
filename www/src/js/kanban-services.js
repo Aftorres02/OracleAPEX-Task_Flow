@@ -102,9 +102,9 @@ namespace.kanbanServices = (function(namespace, $, undefined) {
       "get_tickets",
       {
           x01: columnId
-        , x02: filters.userIds //|| '' // Pass userIds filter
+        , x02: filters.userIds // || '' // Pass userIds filter
         , x03: filters.ticketType // || '' // Pass ticketType filter
-        , x04: filters.titleDescription //|| '' // Pass titleDescription filter
+        , x04: filters.titleDescription  //|| '' // Pass titleDescription filter
       },
       {
         success: function(pData) {
@@ -142,13 +142,17 @@ namespace.kanbanServices = (function(namespace, $, undefined) {
   var createTicketHTML = function(ticket) {
     var ticketNumber = ticket.TICKET_NUMBER;
 
+    // Use Priority instead of Ticket Type as visually primary tag
     var priorityHtml = ticket.PRIORITY 
       ? `<div class="priority-tag ${ticket.PRIORITY.toLowerCase()}">${ticket.PRIORITY}</div>` 
       : '';
-
+ 
+    var typeHtml = '';
+    /*
     var typeHtml = ticket.TICKET_TYPE 
       ? `<div class="ticket-type-tag ${ticket.TICKET_TYPE.toLowerCase()}">${ticket.TICKET_TYPE}</div>` 
       : '';
+    */
 
     // Note: Updated onclick to point to namespace.kanbanServices.copyToClipboard
     return `
