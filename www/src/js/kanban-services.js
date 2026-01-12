@@ -88,13 +88,23 @@ namespace.kanbanServices = (function(namespace, $, undefined) {
    * @param {string} columnId - The column ID
    * @param {Function} callback - Callback function to handle tickets data
    */
-  var getTicketsForColumn = function(columnId, callback) {
-    logger.log('Getting tickets for column', {columnId: columnId});
+  var getTicketsForColumn = function(columnId, filters, callback) {
+    // Handle optional filters argument
+    if (typeof filters === 'function') {
+      callback = filters;
+      filters = {};
+    }
+    filters = filters || {};
+
+    logger.log('Getting tickets for column', {columnId: columnId, filters: filters});
 
     apex.server.process(
       "get_tickets",
       {
-        x01: columnId
+          x01: columnId
+        , x02: filters.userIds //|| '' // Pass userIds filter
+        , x03: filters.ticketType // || '' // Pass ticketType filter
+        , x04: filters.titleDescription //|| '' // Pass titleDescription filter
       },
       {
         success: function(pData) {

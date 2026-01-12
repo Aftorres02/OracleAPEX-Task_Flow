@@ -42,6 +42,15 @@ namespace.kanbanView = (function(namespace, $, undefined) {
   // Create module-specific logger using enterprise logger
   var logger = namespace.logger ? namespace.logger.createModuleLogger(MODULE_NAME) : { log: function(){}, error: function(){}, warning: function(){} };
 
+  var apexPageID = apex.env.APP_PAGE_ID;
+
+  // Filter configuration defaults
+  var _filterConfig = {
+      userFilterItem: 'P' + apexPageID + '_ASSIGNED_TO_ID' // Default item name
+    , ticketTypeFilterItem: 'P' + apexPageID + '_TICKET_TYPE_ID'
+    , titleDescriptionFilterItem: 'P' + apexPageID + '_TITLE_DESCRIPTION'
+  };
+
 
   /* ================================================================ */
   /* EVENT LISTENERS SECTION                                          */
@@ -497,11 +506,41 @@ namespace.kanbanView = (function(namespace, $, undefined) {
 
 
   /* ================================================================ */
+
+
+  /* ================================================================ */
+  /**
+   * Collect current values from configured APEX items
+   * @returns {Object} filters object
+   */
+  var _collectFilters = function() {
+    var filters = {};
+
+    // User Filter
+    if (_filterConfig.userFilterItem && apex.item(_filterConfig.userFilterItem)) {
+      var userIds = apex.item(_filterConfig.userFilterItem).getValue();
+      filters.userIds = Array.isArray(userIds) ? userIds.join(':') : userIds;
+
+      var ticketType = apex.item(_filterConfig.ticketTypeFilterItem).getValue();
+      filters.ticketType = Array.isArray(ticketType) ? ticketType.join(':') : ticketType;
+
+      var titleDesc = apex.item(_filterConfig.titleDescriptionFilterItem).getValue();
+      filters.titleDescription = Array.isArray(titleDesc) ? titleDesc.join(':') : titleDesc;
+    }
+    logger.log('Filters collected', filters);
+    return filters;
+  };
+
+
+
+
+
+  /* ================================================================ */
   /**
    * Load data for all columns
    * @returns {boolean} - Success status
    */
-  var _loadColumnData = function() {
+  var _loadColumnData = function(filters) {
     var columns = _findColumns();
     if (columns.length === 0) {
       logger.warning('No columns found');
@@ -516,14 +555,13 @@ namespace.kanbanView = (function(namespace, $, undefined) {
       if (container.length === 0) return;
 
       // Use SERVICES to get data
-      namespace.kanbanServices.getTicketsForColumn(columnId, function(ticketsData) {
+      namespace.kanbanServices.getTicketsForColumn(columnId, filters, function(ticketsData) {
         renderTicketsForColumn(columnId, ticketsData, true);
       });
     });
 
     return true;
   };
-
 
 
 
@@ -569,16 +607,28 @@ namespace.kanbanView = (function(namespace, $, undefined) {
 
 
 
-
   /* ================================================================ */
   /**
    * Refresh kanban board data
+   * @param {boolean|Object} useFilters - If true(default), reads from items. If false, no filters. If object, uses as filters.
    * @returns {boolean} - Success status
    */
-  var refresh = function() {
-    logger.log('Refreshing kanban board data...');
-    var result = _loadColumnData();
+  var refresh = function(useFilters) {
+    var filters = {};
     
+    // Determine filters based on argument
+    if (useFilters === undefined || useFilters === true) {
+      // Logic encapsulated: Read from APEX items
+      filters = _collectFilters();
+    } else if (typeof useFilters === 'object') {
+      // Manual object passed
+      filters = useFilters;
+    }
+    // Else if false, filters remains empty {}
+
+    logger.log('Refreshing kanban board data...', filters);
+    var result = _loadColumnData(filters);
+
     if (result) {
       var columns = _findColumns();
       columns.each(function(index) {
@@ -587,7 +637,7 @@ namespace.kanbanView = (function(namespace, $, undefined) {
         _makeColumnDroppable(column[0], columnId);
       });
     }
-    
+
     return result;
   };
 

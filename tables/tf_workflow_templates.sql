@@ -19,6 +19,7 @@ create table tf_workflow_templates (
   , last_updated_on              timestamp with local time zone
   , constraint uk_workflow_templates_code unique (template_code)
   , constraint chk_workflow_templates_active_yn check (active_yn in ('Y', 'N'))
+  , constraint tf_workflow_templates_ck_01 check (template_code = upper(trim(template_code)) and instr(template_code, ' ') = 0)
 );
 
 -- Performance indexes

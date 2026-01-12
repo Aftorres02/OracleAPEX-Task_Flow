@@ -19,13 +19,13 @@
     border-radius: 6px;
     padding: 6px;
     min-width: 280px;
-    min-height: 500px;
+    min-height: 650px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.08);
     border-left: 4px solid #037bff52;
     transition: all 0.3s ease;
     position: relative;
   
-    box-shadow: 0 4px 12px rgba(0,123,255,0.15);
+    /* box-shadow: 0 4px 12px rgba(0,123,255,0.15); */
 }
 
 .column-5a.drag-over {
@@ -191,31 +191,30 @@
     line-height: 1.6;
 }
 
-/* Modern Elegant Palette */
 .ticket-type-tag.bug {
-    background-color: #E11D48; /* Rose 600 */
-    border-color: #E11D48;
+    background-color: #dc3545;
+    border-color: #dc3545;
 }
 
 .ticket-type-tag.feature {
-    background-color: #059669; /* Emerald 600 */
-    border-color: #059669;
+    background-color: #28a745;
+    border-color: #28a745;
 }
 
 .ticket-type-tag.task {
-    background-color: #4F46E5; /* Indigo 600 */
-    border-color: #4F46E5;
+    background-color: #007bff;
+    border-color: #007bff;
 }
 
 .ticket-type-tag.documentation {
-    background-color: #64748B; /* Slate 500 */
-    border-color: #64748B;
+    background-color: #17a2b8;
+    border-color: #17a2b8;
 }
 
 .ticket-type-tag.enhancement {
-    background-color: #D97706; /* Amber 600 */
-    border-color: #D97706;
-    color: white; /* Changed to white for elegance/consistency */
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #212529;
 }
 
 .ticket-title {
