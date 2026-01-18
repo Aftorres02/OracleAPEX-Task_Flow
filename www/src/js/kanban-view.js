@@ -401,10 +401,31 @@ namespace.kanbanView = (function(namespace, $, undefined) {
             }
           });
 
+          // Manual Empty State Management
+          // 1. Remove empty state from target container if it exists
+          var targetEmptyState = ticketsContainer.querySelector('.empty-column-state');
+          if (targetEmptyState) {
+            targetEmptyState.remove();
+          }
+
           if (insertBeforeElement) {
             ticketsContainer.insertBefore(ticketElement, insertBeforeElement);
           } else {
             ticketsContainer.appendChild(ticketElement);
+          }
+          
+          // 2. Add empty state to original container if no tickets left
+          if (originalContainer) {
+             var remainingTickets = originalContainer.querySelectorAll(CONFIG.TICKET_CLASS);
+             if (remainingTickets.length === 0) {
+                var emptyState = `
+                  <div class="empty-column-state">
+                     <i class="fa fa-clipboard empty-state-icon"></i>
+                     <div class="empty-state-text">No tickets yet</div>
+                  </div>
+                `;
+                originalContainer.innerHTML = emptyState;
+             }
           }
 
           // 2. Show Processing
@@ -491,6 +512,15 @@ namespace.kanbanView = (function(namespace, $, undefined) {
       });
     } else {
       logger.log('No tickets found for column', {columnId: columnId});
+      
+      // Render Empty State
+      var emptyState = `
+        <div class="empty-column-state">
+           <i class="fa fa-clipboard empty-state-icon"></i>
+           <div class="empty-state-text">No tickets yet</div>
+        </div>
+      `;
+      ticketsContainer.innerHTML = emptyState;
     }
 
     var ticketCountElement = columnElement.querySelector('.ticket-count-5a');
@@ -571,6 +601,54 @@ namespace.kanbanView = (function(namespace, $, undefined) {
 
   /* ================================================================ */
   /**
+   * Setup a synchronized top scrollbar for the board
+   */
+  var _setupSyncedTopScroll = function() {
+    var board = $('.kanban-board-5');
+    
+    // Remove existing top scroll if re-initializing to prevent duplicates
+    $('.kanban-top-scroll').remove();
+
+    if (board.length) {
+       var topScroll = $('<div class="kanban-top-scroll" style="overflow-x:auto; overflow-y:hidden; height:20px; margin-bottom: 0px;"><div class="kanban-top-scroll-content" style="height:1px;"></div></div>');
+       board.before(topScroll);
+       
+       // Sync Widths function
+       var syncWidths = function() {
+           var scrollWidth = board[0].scrollWidth;
+           var visibleWidth = board.width();
+           
+           // Only show top scroll if necessary
+           if (scrollWidth > visibleWidth) {
+              topScroll.find('.kanban-top-scroll-content').width(scrollWidth);
+              topScroll.width(visibleWidth);
+              topScroll.show();
+           } else {
+              topScroll.hide();
+           }
+       };
+
+       // Initial sync and delayed sync to ensure DOM is ready
+       syncWidths();
+       setTimeout(syncWidths, 500); 
+       setTimeout(syncWidths, 1500); 
+       $(window).on('resize', syncWidths);
+
+       // Sync Scroll Events
+       topScroll.on('scroll', function(){
+           board.scrollLeft($(this).scrollLeft());
+       });
+       board.on('scroll', function(){
+           topScroll.scrollLeft($(this).scrollLeft());
+       });
+       
+       logger.log('Synced top scrollbar initialized');
+    }
+  };
+
+
+  /* ================================================================ */
+  /**
    * Initialize kanban board functionality
    * @returns {boolean} - Success status
    */
@@ -594,9 +672,19 @@ namespace.kanbanView = (function(namespace, $, undefined) {
     var columns = _findColumns();
     columns.each(function(index) {
       var column = $(this);
+      
+      // Sync top scroll functionality - Mirror scroll
+      // var columnHeader = column.find('.column-header-5a');
+      // column.on('scroll', function() {
+      //      // Optional sync logic
+      // });
+
       var columnId = column.data('column-id');
       _makeColumnDroppable(column[0], columnId);
     });
+
+    // 4. Setup top scrollbar
+    _setupSyncedTopScroll();
 
     isInitialized = true;
     logger.log('Kanban board initialization completed');

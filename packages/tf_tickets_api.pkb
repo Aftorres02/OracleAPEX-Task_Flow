@@ -161,8 +161,14 @@ is
 
   l_cursor                      sys_refcursor;
   l_board_column_id             tf_board_columns.board_column_id%type := apex_application.g_x01;
+  l_user_ids_filter             varchar2(4000) := apex_application.g_x02;
+  l_ticket_type_filter          varchar2(4000) := apex_application.g_x03;
+  l_title_description_filter    varchar2(4000) := apex_application.g_x04;
 begin
   logger.append_param(l_params, 'p_board_column_id', l_board_column_id);
+  logger.append_param(l_params, 'p_user_ids_filter', l_user_ids_filter);
+  logger.append_param(l_params, 'p_ticket_type_filter', l_ticket_type_filter);
+  logger.append_param(l_params, 'p_title_description_filter', l_title_description_filter);
   logger.log('START', l_scope, null, l_params);
 
   -- Open cursor to get tickets for the column
@@ -171,15 +177,30 @@ begin
          , t.ticket_number
          , t.title
          , tp.priority_code as priority
+         --, null as priority
          , tt.ticket_type_code as ticket_type
          , assignee.display_username as assigned_to
-         , to_char(t.created_on AT TIME ZONE APEX_UTIL.GET_SESSION_TIME_ZONE, 'DD/MON/YYYY HH24:MI') as created_date
+         , case 
+             when t.created_on > sysdate - 1 then apex_util.get_since(t.created_on) 
+             else to_char(t.created_on AT TIME ZONE APEX_UTIL.GET_SESSION_TIME_ZONE, 'DD Mon YYYY HH24:MI') 
+           end as created_date
       from tf_tickets t
       join tf_ticket_priorities tp on tp.ticket_priority_id = t.priority_id
       join tf_ticket_types tt on tt.ticket_type_id = t.ticket_type_id
       left join core_users assignee on t.assigned_to_id = assignee.user_id
      where t.board_column_id = l_board_column_id
        and t.active_yn = 'Y'
+       and (l_user_ids_filter is null or t.assigned_to_id in (
+                                          select column_value
+                                            from table(apex_string.split(l_user_ids_filter, ':'))
+                                         )
+           )
+       and (l_ticket_type_filter is null or t.ticket_type_id in (
+                                          select column_value
+                                            from table(apex_string.split(l_ticket_type_filter, ':'))
+                                         )
+           )
+       and (l_title_description_filter is null or (t.title like '%' || l_title_description_filter || '%' or t.description like '%' || l_title_description_filter || '%'))
        --and t.tenant_id = sys_context('APEX$SESSION','APP_TENANT_ID')
      order by t.ticket_number;
 
