@@ -24,7 +24,7 @@ namespace.kanbanView = (function(namespace, $, undefined) {
   'use strict';
 
   var MODULE_NAME = 'KanbanView';
-  
+
   // Private variables
   var _currentDragTicket = null;
   var isInitialized = false;
@@ -36,7 +36,8 @@ namespace.kanbanView = (function(namespace, $, undefined) {
     CONTAINER_CLASS: '.tickets-container-5a',
     TICKET_CLASS: '.ticket-card',
     DRAG_OVER_CLASS: 'drag-over',
-    DRAGGING_CLASS: 'dragging'
+    DRAGGING_CLASS: 'dragging',
+    AJAX_GET_URL: 'get_url_ajax'
   };
 
   // Create module-specific logger using enterprise logger
@@ -48,7 +49,9 @@ namespace.kanbanView = (function(namespace, $, undefined) {
   var _filterConfig = {
       userFilterItem: 'P' + apexPageID + '_ASSIGNED_TO_ID' // Default item name
     , ticketTypeFilterItem: 'P' + apexPageID + '_TICKET_TYPE_ID'
-    , titleDescriptionFilterItem: 'P' + apexPageID + '_TITLE_DESCRIPTION'
+    , searchFilterItem: 'P' + apexPageID + '_SEARCH'
+    , priorityFilterItem: 'P' + apexPageID + '_PRIORITY'
+    , myTicketsFilterItem: 'P' + apexPageID + '_MY_TICKETS'
   };
 
 
@@ -172,77 +175,85 @@ namespace.kanbanView = (function(namespace, $, undefined) {
 
   /* ================================================================ */
   /**
+   * Private helper to fetch URL and open dialog
+   * @param {string} columnId - Context Column ID
+   * @param {string} columnName - Context Column Name
+   * @param {string} ticketId - Optional Ticket ID (for edit mode)
+   * @param {HTMLElement} triggeringElement - The element that triggered the action
+   */
+  var _openTicketDialog = function(columnId, columnName, ticketId, ticketNumber, triggeringElement) {
+
+    // Prevent multiple modal openings
+    if (isModalOpening) {
+        logger.warning('Modal already opening, ignoring duplicate request');
+        return;
+    }
+
+    isModalOpening = true;
+    logger.log('Opening ticket dialog', {columnId: columnId, ticketId: ticketId});
+
+    apex.server.process(
+        CONFIG.AJAX_GET_URL,
+        {
+          x01: columnId,         // Context: Board Column
+          x02: ticketId ? 'Y' : 'N', // Edit Mode Flag: If ticketId exists, it's edit mode
+          x03: ticketId          // Context: Ticket ID
+        },
+        {
+          success: function(pData) {
+            if (pData.success) {
+
+              // Open modal using dialog
+              apex.navigation.dialog(
+                pData.url,
+                {
+                  title: ticketId ? ('Edit Ticket: ' + ticketNumber) : 'Board Column: ' + columnName,
+                  modal: true,
+                  resizable: true
+                },
+                '',
+                $(triggeringElement)
+              );
+
+              // Listen for dialog close to refresh content
+              var cleanupListener = function() {
+                logger.log('Modal closed, updating column', {columnId: columnId});
+
+                // Refresh Column Data
+                namespace.kanbanServices.getTicketsForColumn(columnId, function(tickets) {
+                  renderTicketsForColumn(columnId, tickets, true);
+                });
+
+                isModalOpening = false;
+                $(triggeringElement).off('apexafterclosecanceldialog', cleanupListener);
+              };
+
+              $(triggeringElement).on('apexafterclosecanceldialog', cleanupListener);
+
+            } else {
+              logger.error('Error fetching URL', pData);
+              isModalOpening = false;
+            }
+          },
+          error: function() {
+            logger.error('AJAX error');
+            isModalOpening = false;
+          }
+        }
+      );
+  };
+
+
+  /**
    * Show a modal or form to add a new ticket
    * @param {string} columnId - The column ID
    * @param {string} columnName - The column name
    */
   var addTicket = function(columnId, columnName, event) {
-    // Prevent multiple modal openings
-    if (isModalOpening) {
-      logger.warning('Modal already opening, ignoring duplicate request');
-      return;
-    }
-
-    isModalOpening = true;
     logger.log('Adding ticket to column', {columnId: columnId, columnName: columnName});
-
-
-    apex.server.process(
-      "get_url_ajax",
-      {
-        x01: columnId
-      },
-      {
-        success: function(pData) {
-          if (pData.success) {
-            logger.log('Got URL for ticket creation', {url: pData.url});
-
-            // Get the triggering element for the dialog
-            var triggeringElement = event.target.closest('.ticket-creation-5a');
-
-            // Open modal using dialog instead of redirect
-            apex.navigation.dialog(
-              pData.url,
-              {
-                title: 'Board Column: ' + columnName,
-                modal: true,
-                resizable: true
-              },
-              '',
-              $(triggeringElement)
-            );
-
-            // Listen for dialog close event to refresh only the specific column
-            var cleanupListener = function() {
-              logger.log('Modal closed, updating column', {columnId: columnId});
-
-              // Ref to SERVICES for data
-              namespace.kanbanServices.getTicketsForColumn(columnId, function(tickets) {
-                // Ref to SELF for render
-                renderTicketsForColumn(columnId, tickets, true);
-              });
-
-              isModalOpening = false;
-              $(triggeringElement).off('apexafterclosecanceldialog', cleanupListener);
-            };
-
-            $(triggeringElement).on('apexafterclosecanceldialog', cleanupListener);
-          } else {
-            logger.error('Error adding ticket to column', {columnId: columnId, columnName: columnName});
-            isModalOpening = false;
-          }
-        },
-        error: function() {
-          logger.error('AJAX error when adding ticket to column', {columnId: columnId, columnName: columnName});
-          isModalOpening = false;
-        }
-      }
-    );
+    var triggeringElement = event.target.closest('.ticket-creation-5a');
+    _openTicketDialog(columnId, columnName, null, null, triggeringElement);
   };
-
-
-
-
 
 
 
@@ -254,7 +265,18 @@ namespace.kanbanView = (function(namespace, $, undefined) {
    */
   var openTicketDetails = function(ticketId, ticketNumber) {
     logger.log('Opening ticket details', {ticketId: ticketId, ticketNumber: ticketNumber});
-    // Implement logic...
+
+    // Find context from the clicked element in the DOM
+    var ticketCard = document.querySelector('[data-ticket-id="' + ticketId + '"]');
+    var columnElement = ticketCard ? ticketCard.closest('.column-5a') : null;
+
+    if (columnElement) {
+        var columnId = columnElement.getAttribute('data-column-id');
+        var columnName = columnElement.querySelector('.column-title-5a').textContent;
+        _openTicketDialog(columnId, columnName, ticketId, ticketNumber, ticketCard);
+    } else {
+        logger.error('Could not find column context for ticket', {ticketId: ticketId});
+    }
   };
 
   /* ================================================================ */
@@ -379,7 +401,7 @@ namespace.kanbanView = (function(namespace, $, undefined) {
           // Check if same column
           var originalColumn = ticketElement.closest(CONFIG.COLUMN_CLASS);
           if (originalColumn === this) {
-            return; 
+            return;
           }
 
           // Store original position
@@ -388,7 +410,7 @@ namespace.kanbanView = (function(namespace, $, undefined) {
 
           // 1. Optimistic Update (Visual Move)
           var dropY = e.clientY;
-          
+
           var existingTickets = ticketsContainer.querySelectorAll(CONFIG.TICKET_CLASS);
           var insertBeforeElement = null;
 
@@ -413,7 +435,7 @@ namespace.kanbanView = (function(namespace, $, undefined) {
           } else {
             ticketsContainer.appendChild(ticketElement);
           }
-          
+
           // 2. Add empty state to original container if no tickets left
           if (originalContainer) {
              var remainingTickets = originalContainer.querySelectorAll(CONFIG.TICKET_CLASS);
@@ -512,7 +534,7 @@ namespace.kanbanView = (function(namespace, $, undefined) {
       });
     } else {
       logger.log('No tickets found for column', {columnId: columnId});
-      
+
       // Render Empty State
       var emptyState = `
         <div class="empty-column-state">
@@ -554,8 +576,14 @@ namespace.kanbanView = (function(namespace, $, undefined) {
       var ticketType = apex.item(_filterConfig.ticketTypeFilterItem).getValue();
       filters.ticketType = Array.isArray(ticketType) ? ticketType.join(':') : ticketType;
 
-      var titleDesc = apex.item(_filterConfig.titleDescriptionFilterItem).getValue();
-      filters.titleDescription = Array.isArray(titleDesc) ? titleDesc.join(':') : titleDesc;
+      var search = apex.item(_filterConfig.searchFilterItem).getValue();
+      filters.search = Array.isArray(search) ? search.join(':') : search;
+
+      var priority = apex.item(_filterConfig.priorityFilterItem).getValue();
+      filters.priority = Array.isArray(priority) ? priority.join(':') : priority;
+
+      var myTickets = apex.item(_filterConfig.myTicketsFilterItem).getValue();
+      filters.myTickets = Array.isArray(myTickets) ? myTickets.join(':') : myTickets;
     }
     logger.log('Filters collected', filters);
     return filters;
@@ -605,19 +633,19 @@ namespace.kanbanView = (function(namespace, $, undefined) {
    */
   var _setupSyncedTopScroll = function() {
     var board = $('.kanban-board-5');
-    
+
     // Remove existing top scroll if re-initializing to prevent duplicates
     $('.kanban-top-scroll').remove();
 
     if (board.length) {
        var topScroll = $('<div class="kanban-top-scroll" style="overflow-x:auto; overflow-y:hidden; height:20px; margin-bottom: 0px;"><div class="kanban-top-scroll-content" style="height:1px;"></div></div>');
        board.before(topScroll);
-       
+
        // Sync Widths function
        var syncWidths = function() {
            var scrollWidth = board[0].scrollWidth;
            var visibleWidth = board.width();
-           
+
            // Only show top scroll if necessary
            if (scrollWidth > visibleWidth) {
               topScroll.find('.kanban-top-scroll-content').width(scrollWidth);
@@ -630,8 +658,8 @@ namespace.kanbanView = (function(namespace, $, undefined) {
 
        // Initial sync and delayed sync to ensure DOM is ready
        syncWidths();
-       setTimeout(syncWidths, 500); 
-       setTimeout(syncWidths, 1500); 
+       setTimeout(syncWidths, 500);
+       setTimeout(syncWidths, 1500);
        $(window).on('resize', syncWidths);
 
        // Sync Scroll Events
@@ -641,7 +669,7 @@ namespace.kanbanView = (function(namespace, $, undefined) {
        board.on('scroll', function(){
            topScroll.scrollLeft($(this).scrollLeft());
        });
-       
+
        logger.log('Synced top scrollbar initialized');
     }
   };
@@ -672,7 +700,7 @@ namespace.kanbanView = (function(namespace, $, undefined) {
     var columns = _findColumns();
     columns.each(function(index) {
       var column = $(this);
-      
+
       // Sync top scroll functionality - Mirror scroll
       // var columnHeader = column.find('.column-header-5a');
       // column.on('scroll', function() {
@@ -704,7 +732,7 @@ namespace.kanbanView = (function(namespace, $, undefined) {
    */
   var refresh = function(useFilters) {
     var filters = {};
-    
+
     // Determine filters based on argument
     if (useFilters === undefined || useFilters === true) {
       // Logic encapsulated: Read from APEX items

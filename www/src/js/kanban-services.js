@@ -30,7 +30,7 @@ namespace.kanbanServices = (function(namespace, $, undefined) {
   
   // Configuration constants
   var CONFIG = {
-    API_ENDPOINT: '/api/tickets/'
+    ajaxGetTicketsForColumn: 'get_tickets_for_column_ajax'
   };
 
   // Create module-specific logger using enterprise logger
@@ -99,12 +99,14 @@ namespace.kanbanServices = (function(namespace, $, undefined) {
     logger.log('Getting tickets for column', {columnId: columnId, filters: filters});
 
     apex.server.process(
-      "get_tickets",
+      CONFIG.ajaxGetTicketsForColumn,
       {
           x01: columnId
         , x02: filters.userIds // || '' // Pass userIds filter
         , x03: filters.ticketType // || '' // Pass ticketType filter
-        , x04: filters.titleDescription  //|| '' // Pass titleDescription filter
+        , x04: filters.search  //|| '' // Pass search filter
+        , x05: filters.priority // || '' // Pass priority filter
+        , x06: filters.myTickets // || '' // Pass myTickets filter Y/N
       },
       {
         success: function(pData) {
@@ -158,7 +160,7 @@ namespace.kanbanServices = (function(namespace, $, undefined) {
     return `
       <div class="ticket-header">
         <div class="ticket-number-container">
-          <div class="ticket-number">${ticketNumber}</div>
+          <div class="ticket-number" data-ticket-id="${ticket.TICKET_ID}">${ticketNumber}</div>
           <span class="copy-ticket-btn" onclick="namespace.kanbanServices.copyToClipboard('${ticketNumber}', event, 'Kanban')">
             <i class="fa fa-copy"></i>
           </span>

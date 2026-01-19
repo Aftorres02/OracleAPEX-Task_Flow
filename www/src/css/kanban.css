@@ -44,7 +44,7 @@
     padding: 6px;
     min-width: 280px;
     /* Reverted to min-height for consistent looking empty columns */
-    min-height: 200px;
+    min-height: 75vh;
     height: 100%; /* Ensure it fills the stretched height */
     display: flex;
     flex-direction: column;
@@ -337,10 +337,6 @@
     z-index: 10;
 }
 
-/* Feedback de éxito - Sin efectos visuales */
-.ticket-card.success-feedback {
-    /* Sin efectos visuales */
-}
 
 /* Feedback de error - Borde rojo completo */
 .ticket-card.error-feedback {

@@ -116,10 +116,12 @@ is
   l_url                          varchar2(1000);
 
   l_board_column_id         varchar2(100) := apex_application.g_x01;
+  l_edit_mode_yn            varchar2(1) := apex_application.g_x02;
+  l_ticket_id               tf_tickets.ticket_id%type := apex_application.g_x03;
 
   l_items                    varchar2(100);
   l_values                   varchar2(100);
-  l_ticket_page_id           number := 1010;
+  l_ticket_page_id           number;
   l_application_id           number := v('APP_ID');
 
   l_column_name              tf_boards.board_name%type;
@@ -131,42 +133,54 @@ begin
   logger.append_param(l_params, 'p_board_column_id', l_board_column_id);
   logger.log('START', l_scope, null, l_params);
 
-  begin
-    select bc.column_name
-         , bc.board_id
-         , s.sprint_id
-         , s.project_id
-      into l_column_name
-         , l_board_id
-         , l_sprint_id
-         , l_project_id
-      from tf_board_columns bc
-     inner join tf_boards b on b.board_id = bc.board_id
-     inner join pms_sprints s on s.sprint_id = b.sprint_id
-     where bc.board_column_id = l_board_column_id;
+  if l_edit_mode_yn = 'Y' then
+    l_ticket_page_id := 1015;
+
+    l_items := 'P' || l_ticket_page_id || '_TICKET_ID';
+    l_values := l_ticket_id;
+  else
+    l_ticket_page_id := 1010;
 
 
-    -- Set the board id to the APEX Item
-    l_items := 'P' || l_ticket_page_id || '_BOARD_ID'
-           || ',P' || l_ticket_page_id || '_BOARD_COLUMN_ID'
-           || ',P' || l_ticket_page_id || '_SPRINT_ID'
-           || ',P' || l_ticket_page_id || '_PROJECT_ID'
-           || ',P' || l_ticket_page_id || '_QUICK_CREATION_FLAG';
+    begin
+      select bc.column_name
+           , bc.board_id
+           , s.sprint_id
+           , s.project_id
+        into l_column_name
+           , l_board_id
+           , l_sprint_id
+           , l_project_id
+        from tf_board_columns bc
+       inner join tf_boards b on b.board_id = bc.board_id
+       inner join pms_sprints s on s.sprint_id = b.sprint_id
+       where bc.board_column_id = l_board_column_id;
 
-    -- Set the board id to the APEX Value
-    l_values := l_board_id
-      || ',' || l_board_column_id
-      || ',' || l_sprint_id
-      || ',' || l_project_id
-      || ',' || 'Y';
 
-    logger.log('l_items: ' || l_items, l_scope, null, l_params);
-    logger.log('l_values: ' || l_values, l_scope, null, l_params);
+      -- Set the board id to the APEX Item
+      l_items := 'P' || l_ticket_page_id || '_BOARD_ID'
+            || ',P' || l_ticket_page_id || '_BOARD_COLUMN_ID'
+            || ',P' || l_ticket_page_id || '_SPRINT_ID'
+            || ',P' || l_ticket_page_id || '_PROJECT_ID'
+            || ',P' || l_ticket_page_id || '_QUICK_CREATION_FLAG';
+
+      -- Set the board id to the APEX Value
+      l_values := l_board_id
+        || ',' || l_board_column_id
+        || ',' || l_sprint_id
+        || ',' || l_project_id
+        || ',' || 'Y';
+
+      logger.log('l_items: ' || l_items, l_scope, null, l_params);
+      logger.log('l_values: ' || l_values, l_scope, null, l_params);
 
     exception
       when others then
         null;
     end;
+  end if;
+
+
 
 
 
