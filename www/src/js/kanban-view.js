@@ -216,13 +216,12 @@ namespace.kanbanView = (function(namespace, $, undefined) {
               );
 
               // Listen for dialog close to refresh content
-              var cleanupListener = function() {
-                logger.log('Modal closed, updating column', {columnId: columnId});
+              var cleanupListener = function(event, data) {
+                logger.log('Modal closed, refreshing board to ensure consistency', {columnId: columnId});
 
-                // Refresh Column Data
-                namespace.kanbanServices.getTicketsForColumn(columnId, function(tickets) {
-                  renderTicketsForColumn(columnId, tickets, true);
-                });
+                // Refresh ALL columns to handle potential status/column changes
+                // We use the internal _loadColumnData with current filters
+                _loadColumnData(_collectFilters());
 
                 isModalOpening = false;
                 $(triggeringElement).off('apexafterclosecanceldialog', cleanupListener);

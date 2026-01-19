@@ -30,7 +30,8 @@ namespace.kanbanServices = (function(namespace, $, undefined) {
   
   // Configuration constants
   var CONFIG = {
-    ajaxGetTicketsForColumn: 'get_tickets_for_column_ajax'
+      ajaxGetTicketsForColumn: 'get_tickets_for_column_ajax'
+    , ajaxMoveTicket: 'move_ticket_ajax'
   };
 
   // Create module-specific logger using enterprise logger
@@ -116,7 +117,7 @@ namespace.kanbanServices = (function(namespace, $, undefined) {
             callback(pData.tickets || []);
           }
           else {
-            logger.error('Error getting tickets for column', {columnId: columnId, error: pData.error_msg});
+            logger.error('Error getting tickets for column', {columnId: columnId, error: pData.message});
             callback([]);
           }
         },
@@ -197,7 +198,7 @@ namespace.kanbanServices = (function(namespace, $, undefined) {
 
     // Llamada AJAX a tu endpoint
     apex.server.process(
-      "move_ticket_ajax",
+      CONFIG.ajaxMoveTicket,
       {
         x01: ticketId, // Ticket ID
         x02: newColumnId,  // New Column ID
@@ -214,7 +215,7 @@ namespace.kanbanServices = (function(namespace, $, undefined) {
               callback(true, pData);
             }
           } else {
-            logger.error('Error updating ticket status', {ticketId: ticketId, newColumnId: newColumnId, error: pData.error_msg});
+            logger.error('Error updating ticket status on ajax process: '+ CONFIG.ajaxMoveTicket, {ticketId: ticketId, newColumnId: newColumnId, error: pData.message}, {sendToServer: true});
 
             // Execute callback with error if provided
             if (typeof callback === 'function') {
@@ -223,7 +224,10 @@ namespace.kanbanServices = (function(namespace, $, undefined) {
           }
         },
         error: function(jqXHR, textStatus, errorThrown) {
-          logger.error('AJAX error updating ticket status', {ticketId: ticketId, newColumnId: newColumnId, status: textStatus, error: errorThrown});
+          logger.error('AJAX error updating ticket status'
+                    , {ticketId: ticketId, newColumnId: newColumnId, status: textStatus, error: errorThrown}
+                    , {sendToServer: true}
+                    );
 
           // Execute callback with error if provided
           if (typeof callback === 'function') {
